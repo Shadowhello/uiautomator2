@@ -9,6 +9,7 @@ import time
 import datetime
 import csv
 import sys
+import os
 import atexit
 from collections import namedtuple
 
@@ -145,7 +146,7 @@ class Perf(object):
         views = self.shell(['dumpsys', 'SurfaceFlinger',
                             '--list']).output.splitlines()
         if not app:
-            app = d.current_app()
+            app = d.app_current()
         current = app['package'] + "/" + app['activity']
         surface_curr = 'SurfaceView - ' + current
         if surface_curr in views:
@@ -202,7 +203,7 @@ class Perf(object):
         pid = self.d._pidof_app(self.package_name)
         if pid is None:
             return
-        app = self.d.current_app()
+        app = self.d.app_current()
         pss = self.memory()
         cpu, scpu = self.cpu(pid)
         rbytes, tbytes, rtcp, ttcp = self.netstat(pid)[:4]
@@ -251,6 +252,9 @@ class Perf(object):
             self._condition.release()
 
     def start(self):
+        csv_dir = os.path.dirname(self.csv_output)
+        if not os.path.isdir(csv_dir):
+            os.makedirs(csv_dir)
         if sys.version_info.major < 3:
             f = open(self.csv_output, "wb")
         else:
@@ -357,7 +361,7 @@ if __name__ == '__main__':
     u2.plugin_register('perf', Perf, pkgname)
 
     d = u2.connect()
-    print(d.current_app())
+    print(d.app_current())
     # print(d.ext_perf.netstat(5350))
     # d.app_start(pkgname)
     d.ext_perf.start()
